@@ -33,9 +33,9 @@ func getTestParcel() Parcel {
 func TestAddGetDelete(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db") // настройте подключение к БД
-	if err != nil {
-		require.NoError(t, err)
-	}
+
+	require.NoError(t, err)
+
 	defer db.Close()
 
 	store := NewParcelStore(db)
@@ -49,6 +49,7 @@ func TestAddGetDelete(t *testing.T) {
 	// get
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
+	parcel.Number = id
 	stored, err := store.Get(id)
 	require.NoError(t, err)
 	assert.Equal(t, parcel, stored)
@@ -59,7 +60,8 @@ func TestAddGetDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = store.Get(id)
-	require.Equal(t, sql.ErrNoRows, err)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 // TestSetAddress проверяет обновление адреса
@@ -171,7 +173,7 @@ func TestGetByClient(t *testing.T) {
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
 		stored := parcelMap[parcel.Number]
-		require.Equal(t, stored.Client, parcel.Client)
+		assert.Equal(t, stored, parcel)
 		require.Equal(t, stored.Status, parcel.Status)
 		require.Equal(t, stored.Address, parcel.Address)
 		require.Equal(t, stored.CreatedAt, parcel.CreatedAt)
